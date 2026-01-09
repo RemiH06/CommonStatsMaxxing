@@ -11,8 +11,8 @@ class UserProfile {
   
   // Preferencias de dieta
   double budgetPerWeek;
-  List allergies;
-  List dietaryRestrictions; // "vegetariano", "vegano", etc.
+  List<String> allergies;
+  List<String> dietaryRestrictions; // "vegetariano", "vegano", etc.
   
   // Preferencias de rutina
   String routineType; // "feminine_sculpting", "general_fitness", etc.
@@ -43,7 +43,76 @@ class UserProfile {
     this.shoppingDay = "Saturday",
   });
   
-  Map ToJson() {
+  // Calcula la edad actual
+  int GetAge() {
+    DateTime today = DateTime.now();
+    int age = today.year - birthDate.year;
+    
+    // ajusta si aun no ha cumplido años este año
+    if (today.month < birthDate.month ||
+        (today.month == birthDate.month && today.day < birthDate.day)) {
+      age--;
+    }
+    
+    return age;
+  }
+  
+  // Calcula el IMC (Indice de Masa Corporal)
+  double CalculateBMI() {
+    double heightInMeters = height / 100.0;
+    return weight / (heightInMeters * heightInMeters);
+  }
+  
+  // Categoria del IMC
+  String GetBMICategory() {
+    double bmi = CalculateBMI();
+    
+    if (bmi < 18.5) {
+      return "Bajo peso";
+    } else if (bmi < 25) {
+      return "Peso normal";
+    } else if (bmi < 30) {
+      return "Sobrepeso";
+    } else {
+      return "Obesidad";
+    }
+  }
+  
+  // Calcula tiempo en terapia hormonal
+  String? GetHormoneTherapyDuration() {
+    if (!onHormoneTherapy || hormoneStartDate == null) {
+      return null;
+    }
+    
+    DateTime now = DateTime.now();
+    int months = (now.year - hormoneStartDate!.year) * 12 +
+        (now.month - hormoneStartDate!.month);
+    
+    if (months < 12) {
+      return "$months meses";
+    } else {
+      int years = months ~/ 12;
+      int remainingMonths = months % 12;
+      
+      if (remainingMonths > 0) {
+        return "$years años y $remainingMonths meses";
+      } else {
+        return "$years años";
+      }
+    }
+  }
+  
+  // Verifica si tiene alergias
+  bool HasAllergies() {
+    return allergies.isNotEmpty;
+  }
+  
+  // Verifica si tiene restricciones dietéticas
+  bool HasDietaryRestrictions() {
+    return dietaryRestrictions.isNotEmpty;
+  }
+  
+  Map<String, dynamic> ToJson() {
     return {
       'name': name,
       'birthDate': birthDate.toIso8601String(),
@@ -64,12 +133,12 @@ class UserProfile {
     };
   }
   
-  factory UserProfile.FromJson(Map json) {
+  factory UserProfile.FromJson(Map<String, dynamic> json) {
     return UserProfile(
       name: json['name'],
       birthDate: DateTime.parse(json['birthDate']),
-      weight: json['weight'],
-      height: json['height'],
+      weight: json['weight'].toDouble(),
+      height: json['height'].toDouble(),
       assignedGender: json['assignedGender'],
       genderIdentity: json['genderIdentity'],
       onHormoneTherapy: json['onHormoneTherapy'] ?? false,
@@ -77,13 +146,51 @@ class UserProfile {
       hormoneStartDate: json['hormoneStartDate'] != null 
         ? DateTime.parse(json['hormoneStartDate']) 
         : null,
-      budgetPerWeek: json['budgetPerWeek'],
-      allergies: List.from(json['allergies'] ?? []),
-      dietaryRestrictions: List.from(json['dietaryRestrictions'] ?? []),
+      budgetPerWeek: json['budgetPerWeek'].toDouble(),
+      allergies: List<String>.from(json['allergies'] ?? []),
+      dietaryRestrictions: List<String>.from(json['dietaryRestrictions'] ?? []),
       routineType: json['routineType'],
       notificationTime: json['notificationTime'] ?? "08:00",
       shoppingPeriod: json['shoppingPeriod'] ?? "weekly",
       shoppingDay: json['shoppingDay'] ?? "Saturday",
+    );
+  }
+  
+  UserProfile CopyWith({
+    String? name,
+    DateTime? birthDate,
+    double? weight,
+    double? height,
+    String? assignedGender,
+    String? genderIdentity,
+    bool? onHormoneTherapy,
+    String? hormoneType,
+    DateTime? hormoneStartDate,
+    double? budgetPerWeek,
+    List<String>? allergies,
+    List<String>? dietaryRestrictions,
+    String? routineType,
+    String? notificationTime,
+    String? shoppingPeriod,
+    String? shoppingDay,
+  }) {
+    return UserProfile(
+      name: name ?? this.name,
+      birthDate: birthDate ?? this.birthDate,
+      weight: weight ?? this.weight,
+      height: height ?? this.height,
+      assignedGender: assignedGender ?? this.assignedGender,
+      genderIdentity: genderIdentity ?? this.genderIdentity,
+      onHormoneTherapy: onHormoneTherapy ?? this.onHormoneTherapy,
+      hormoneType: hormoneType ?? this.hormoneType,
+      hormoneStartDate: hormoneStartDate ?? this.hormoneStartDate,
+      budgetPerWeek: budgetPerWeek ?? this.budgetPerWeek,
+      allergies: allergies ?? this.allergies,
+      dietaryRestrictions: dietaryRestrictions ?? this.dietaryRestrictions,
+      routineType: routineType ?? this.routineType,
+      notificationTime: notificationTime ?? this.notificationTime,
+      shoppingPeriod: shoppingPeriod ?? this.shoppingPeriod,
+      shoppingDay: shoppingDay ?? this.shoppingDay,
     );
   }
 }
